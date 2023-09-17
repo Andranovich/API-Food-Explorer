@@ -1,6 +1,6 @@
 require("express-async-errors");
 
-const database = require("./database/sqlite");
+const migrationsRun = require("./database/sqlite/migrations");
 
 const AppError = require("./utils/App.Error");
 
@@ -13,7 +13,7 @@ app.use(express.json()); //informa pra API qual o formato das informações
 
 app.use(routes);
 
-database();
+migrationsRun();
 
 app.use((error, request, response, next) => {
   if (error instanceof AppError) {
