@@ -1,6 +1,6 @@
 const { hash, compare } = require("bcryptjs");
-
 const AppError = require("../utils/App.Error.js");
+const knex = require("../database/knex");
 
 const sqliteConnection = require("../database/sqlite");
 
@@ -42,19 +42,16 @@ class UsersController {
 
   async update(request, response) {
     const { name, email, password, old_password } = request.body;
-    const { id } = request.params;
+    const user_id = request.user.id;
 
     const database = await sqliteConnection();
-    const user = await database.get("SELECT * FROM users WHERE id = (?)", [id]);
+    const user = await database.get("SELECT * FROM users WHERE id = (?)", [user_id]);
 
     if (!user) {
       throw new AppError("Usuário não encontrado");
     }
 
-    const userWithUpdatedEmail = await database.get(
-      "SELECT * FROM users WHERE email = (?)",
-      [email]
-    );
+    const userWithUpdatedEmail = await database.get("SELECT * FROM users WHERE email = (?)", [email]);
 
     if (userWithUpdatedEmail && userWithUpdatedEmail.id !== user.id) {
       throw new AppError("Este e-mail já está em uso.");
@@ -87,11 +84,43 @@ class UsersController {
       password = ?,
       updated_at = datetime('now')
       WHERE ID = ?`,
-      [user.name, user.email, user.password, id]
+      [user.name, user.email, user.password, user_id]
     );
 
     return response.json();
   }
+
+  async login(request, response) {
+    const { email, password } = request.body;
+
+    const database = await sqliteConnection();
+
+    const user = await knex("users").where({ email }).first();
+
+    const checkPassword = await compare(password, user.password);
+
+    if(!checkPassword) {
+      throw new AppError("Email ou senha inválidos");
+    }
+    
+    return response.json(user);
+ 
+  }
+
+  // async show(request, response) {
+  //   const { name, email } = request.body;
+  //   const user_id = request.user.id;
+
+  //   const database = await sqliteConnection();
+  //   const user = await database.get("SELECT * FROM users WHERE id = (?)", [user_id]);
+
+  //   if (!userIsAdmin) {
+
+  //   }
+
+
+  // }
 }
+
 
 module.exports = UsersController;
