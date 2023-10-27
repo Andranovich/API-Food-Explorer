@@ -121,10 +121,28 @@ class DishesController {
 
   async index(request, response) {
     // Capturing Query Parameters
+    const { category } = request.query;
+    console.log(request.query);
+    console.log(category);
     const data = await knex("dishes");
     const ingredients = await knex("ingredients");
+    if (category) {
+      const dishesData = data
+        .filter((item) => {
+          return item.category === category;
+        })
+        .map((item) => {
+          return {
+            ...item,
+            ingredients: ingredients.filter(
+              (ingredient) => ingredient.dish_id === item.id
+            ),
+          };
+        });
+      return response.status(200).json(dishesData);
+    }
+
     const dishesData = data.map((item) => {
-      
       return {
         ...item,
         ingredients: ingredients.filter(
