@@ -105,6 +105,10 @@ class DishesController {
 
     // Getting the dish and ingredients data through the informed ID
     const dish = await knex("dishes").where({ id }).first();
+    const ingredients = await knex("ingredients");
+    dish.ingredients = ingredients.filter(
+      (ingredient) => ingredient.dish_id === dish.id
+    );
 
     return response.status(201).json(dish);
   }
@@ -122,8 +126,6 @@ class DishesController {
   async index(request, response) {
     // Capturing Query Parameters
     const { category } = request.query;
-    console.log(request.query);
-    console.log(category);
     const data = await knex("dishes");
     const ingredients = await knex("ingredients");
     if (category) {
