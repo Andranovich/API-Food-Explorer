@@ -5,11 +5,16 @@ const diskStorage = new DiskStorage();
 
 class DishesController {
   async create(request, response) {
-    const { title, description, category, price, ingredients, image } =
+    const { 
+      title, 
+      description, 
+      category, 
+      price, 
+      ingredients, 
+      image } =
       request.body;
-    console.log(request.file);
-    console.log(ingredients);
-    const filename = await diskStorage.saveFile(request.file.filename);
+    const filename = request.file? await diskStorage.saveFile(request.file?.filename) : "" ;
+    console.log(request.body);
 
     // const checkDishAlreadyExists = await knex("dishes")
     //   .where({ title })
@@ -24,7 +29,7 @@ class DishesController {
     // const filename = await diskStorage.saveFile(imageFileName);
     const dish_id = await knex("dishes")
       .insert({
-        image: filename,
+        image:  filename ? filename: "",
         title,
         description,
         price,
@@ -33,7 +38,7 @@ class DishesController {
       .returning("id");
 
     console.log(dish_id[0].id);
-    const ingredientsData = ingredients.map((ingredient) => {
+    const ingredientsData = JSON.parse(ingredients).map((ingredient) => {
       return {
         name: ingredient,
         dish_id: dish_id[0].id,
