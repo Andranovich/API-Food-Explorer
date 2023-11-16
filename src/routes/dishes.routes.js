@@ -25,4 +25,4 @@ router.put("/:id", ensureIsAdmin, upload.single("image"), dishesController.updat
 router.patch("/images/:id", upload.single("image"), dishesImagesController.update);
 
 
-module.exports = router; // exporta a rota para o server.js poder usar
+module.exports = router;

@@ -1,3 +1,4 @@
+require("dotenv/config");
 require("express-async-errors");
 
 const migrationsRun = require("./database/sqlite/migrations");
@@ -9,8 +10,7 @@ const app = express();
 const uploadConfig = require("./configs/upload");
 
 app.use(cors());
-app.use(express.json()); //informa pra API qual o formato das informações
-
+app.use(express.json()); 
 
 app.use(routes);
 app.use("/image", express.static(uploadConfig.UPLOADS_FOLDER));
@@ -33,5 +33,5 @@ app.use((error, request, response, next) => {
   });
 });
 
-const PORT = 3333;
+const PORT = process.env.PORT || 3333;
 app.listen(PORT, () => console.log(`Server is running on ${PORT}`));

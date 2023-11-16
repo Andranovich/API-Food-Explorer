@@ -7,6 +7,6 @@ const routes = Router();
 
 routes.use("/dishes", dishes);
 routes.use("/sessions", sessionsRouter);
-routes.use("/users", usersRouter); // toda vez que alguém for acessar o /users vai ser redirecionado para o usersRouter
+routes.use("/users", usersRouter); 
 
 module.exports = routes;

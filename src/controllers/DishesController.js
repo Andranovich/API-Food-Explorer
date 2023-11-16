@@ -1,35 +1,20 @@
 const knex = require("../database/knex");
-const AppError = require("../utils/App.Error");
 const DiskStorage = require("../providers/DiskStorage");
 const diskStorage = new DiskStorage();
 
 class DishesController {
   async create(request, response) {
-    const { 
-      title, 
-      description, 
-      category, 
-      price, 
-      ingredients, 
-      image } =
+    const { title, description, category, price, ingredients, image } =
       request.body;
-    const filename = request.file? await diskStorage.saveFile(request.file?.filename) : "" ;
+    const filename = request.file
+      ? await diskStorage.saveFile(request.file?.filename)
+      : "";
     console.log(request.body);
 
-    // const checkDishAlreadyExists = await knex("dishes")
-    //   .where({ title })
-    //   .first();
-
-    // if (checkDishAlreadyExists) {
-    //   throw new AppError("O prato já existe.");
-    // }
-
-    // const imageFileName = request.file.filename;
-    // const diskStorage = new DiskStorage();
-    // const filename = await diskStorage.saveFile(imageFileName);
+   
     const dish_id = await knex("dishes")
       .insert({
-        image:  filename ? filename: "",
+        image: filename ? filename : "",
         title,
         description,
         price,
@@ -46,25 +31,7 @@ class DishesController {
     });
 
     const result = await knex("ingredients").insert(ingredientsData);
-    // const hasOnlyOneIngredient = typeof ingredients === "string";
-
-    // let ingredientsInsert;
-
-    // if (hasOnlyOneIngredient) {
-    //   ingredientsInsert = {
-    //     name: ingredients,
-    //     dish_id,
-    //   };
-    // } else if (ingredients.length > 1) {
-    //   ingredientsInsert = ingredients.map((name) => {
-    //     return {
-    //       name,
-    //       dish_id,
-    //     };
-    //   });
-    // }
-
-    // await knex("ingredients").insert(ingredientsInsert);
+    
 
     return response.status(201).json();
   }
@@ -72,9 +39,45 @@ class DishesController {
   async update(request, response) {
     const { title, description, category, price } = request.body;
     const { id } = request.params;
-
+    const filename = request.file
+      ? await diskStorage.saveFile(request.file?.filename)
+      : "";
+    const ingredients = JSON.parse(request.body.ingredients);
     const data = await knex("dishes").where({ id }).first();
 
+    const ingredientList = await knex("ingredients").where({ dish_id: id });
+
+    const ingredientsToRemoved = ingredientList.filter((ingredient) => {
+      return !ingredients.some((item) => item.id === ingredient.id);
+    });
+
+    console.log(request.body);
+
+    const newIngredients = ingredients
+      .filter((ingredient) => {
+        return !ingredient.id;
+      })
+      .map((ingredient) => {
+        return {
+          name: ingredient.name,
+          dish_id: id,
+        };
+      });
+
+    await knex("ingredients")
+      .whereIn(
+        "id",
+        ingredientsToRemoved.map((i) => i.id)
+      )
+      .del();
+
+    if (newIngredients.length > 0) {
+      const result = await knex("ingredients").insert(newIngredients);
+    }
+
+    if (filename) {
+      data.image = filename;
+    }
     data.title = title ?? data.title;
     data.description = description ?? data.description;
     data.category = category ?? data.category;
@@ -82,24 +85,7 @@ class DishesController {
 
     await knex("dishes").where({ id }).update(data);
 
-    // let ingredientsInsert;
-
-    // if (hasOnlyOneIngredient) {
-    //   ingredientsInsert = {
-    //     name: ingredients,
-    //     dish_id: dish.id,
-    //   };
-    // } else if (ingredients.length > 1) {
-    //   ingredientsInsert = ingredients.map((ingredient) => {
-    //     return {
-    //       dish_id: dish.id,
-    //       name: ingredient,
-    //     };
-    //   });
-    // }
-
-    // await knex("ingredients").where({ dish_id: id }).delete();
-    // await knex("ingredients").where({ dish_id: id }).insert(ingredientsInsert);
+    
 
     return response.status(201).json("Prato atualizado com sucesso");
   }
@@ -119,10 +105,8 @@ class DishesController {
   }
 
   async delete(request, response) {
-    // Capturing ID Parameters
     const { id } = request.params;
 
-    // Deleting dish through the informed ID
     await knex("dishes").where({ id }).delete();
 
     return response.status(200).json();
@@ -130,26 +114,12 @@ class DishesController {
 
   async index(request, response) {
     // Capturing Query Parameters
-    const { category } = request.query;
-    const data = await knex("dishes");
-    const ingredients = await knex("ingredients");
-    if (category) {
-      const dishesData = data
-        .filter((item) => {
-          return item.category === category;
-        })
-        .map((item) => {
-          return {
-            ...item,
-            ingredients: ingredients.filter(
-              (ingredient) => ingredient.dish_id === item.id
-            ),
-          };
-        });
-      return response.status(200).json(dishesData);
-    }
+    const { search } = request.query;
+    let data = await knex("dishes");
 
-    const dishesData = data.map((item) => {
+    const ingredients = await knex("ingredients");
+
+    data = data.map((item) => {
       return {
         ...item,
         ingredients: ingredients.filter(
@@ -157,7 +127,19 @@ class DishesController {
         ),
       };
     });
-    return response.status(200).json(dishesData);
+
+    if (search) {
+      data = data.filter((dish) => {
+        console.log(dish);
+        const title = dish.title.toLowerCase().includes(search.toLowerCase());
+        const ingredients = dish.ingredients.find((item) => {
+          return item.name.toLowerCase().includes(search.toLowerCase());
+        });
+
+        return title || ingredients;
+      });
+    }
+    return response.status(200).json(data);
   }
 }
 

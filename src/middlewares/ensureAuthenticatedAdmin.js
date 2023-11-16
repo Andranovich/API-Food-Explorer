@@ -3,10 +3,8 @@ const AppError = require("../utils/App.Error");
 
 async function ensureAuthenticatedAdmin(request, response, next) {
     const user_id = request.user.id;
-
     const user = await knex("users").where({id: user_id}).first();
-
-    if (!user.is_admin) {
+    if (!user.isAdmin) {
         throw new AppError("user unauthorized", 401)
     }
 

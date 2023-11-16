@@ -4,14 +4,6 @@ const knex = require("../database/knex");
 
 const sqliteConnection = require("../database/sqlite");
 
-//uma class permite criar várias funções dentro
-/*  MÈTODOS
- * index - GET para listar vários registros.
- * show - GET para exibir um registro específico.
- * create - POST para criar um registro.
- * update - PUT para atualizar um registro.
- * delete - DELETE para remover um registro.
- */
 class UsersController {
   async create(request, response) {
     const { name, email, password } = request.body;
@@ -107,19 +99,6 @@ class UsersController {
  
   }
 
-  // async show(request, response) {
-  //   const { name, email } = request.body;
-  //   const user_id = request.user.id;
-
-  //   const database = await sqliteConnection();
-  //   const user = await database.get("SELECT * FROM users WHERE id = (?)", [user_id]);
-
-  //   if (!userIsAdmin) {
-
-  //   }
-
-
-  // }
 }
 
 
